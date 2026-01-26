@@ -29,7 +29,7 @@ export const clerkWebhook = async (req, res) => {
           resume: "",
         };
         await User.create(userData);
-        res.JSON({});
+        res.json({});
         break;
       }
       case "user.updated": {
@@ -40,12 +40,12 @@ export const clerkWebhook = async (req, res) => {
           image: data.profile_image_url,
         };
         await User.findByIdAndUpdate(data.id, userData);
-        res.JSON({});
+        res.json({});
         break;
       }
       case "user.deleted": {
         await User.findByIdAndDelete(data.id);
-        res.JSON({});
+        res.json({});
         break;
       }
       default:
@@ -53,6 +53,6 @@ export const clerkWebhook = async (req, res) => {
     }
   } catch (error) {
     console.log(error.message);
-    res.JSON({ success: false, message: "Webhook handling failed" });
+    res.json({ success: false, message: "Webhook handling failed" });
   }
 };
