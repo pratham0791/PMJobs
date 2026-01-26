@@ -1,74 +1,58 @@
 import { Webhook } from "svix";
 import User from "../models/User.js";
 
-// API Controller function to manage clerk user with db
-export const clerkWebhook = async (req, res) => {
-  let evt;
+//API Controller function to manage clerk user with db
 
-  /* --------------------------------------------------
-     1️⃣ Verify webhook using RAW body (REQUIRED)
-  -------------------------------------------------- */
+export const clerkWebhook = async (req, res) => {
   try {
-    // Create a svix instance with the clerk webhook secret
+    //Create a svix instance with the clerk webhook secret
     const whook = new Webhook(process.env.CLERK_WEBHOOK_SECRET);
 
-    // IMPORTANT: raw body, NOT req.body JSON
-    const payload = req.body.toString("utf8");
-
-    evt = whook.verify(payload, {
+    //Verifying  header
+    await whook.verify(JSON.stringify(req.body), {
       "svix-id": req.headers["svix-id"],
       "svix-timestamp": req.headers["svix-timestamp"],
       "svix-signature": req.headers["svix-signature"],
     });
-  } catch (error) {
-    console.error("❌ Clerk webhook verification failed:", error);
-    return res.status(400).json({ success: false, message: "Invalid signature" });
-  }
 
-  /* --------------------------------------------------
-     2️⃣ Acknowledge Clerk immediately
-  -------------------------------------------------- */
-  res.status(200).json({ received: true });
+    //getting data from the request body
+    const { data, type } = req.body;
 
-  /* --------------------------------------------------
-     3️⃣ Handle event AFTER response
-  -------------------------------------------------- */
-  try {
-    const { data, type } = evt;
-
+    //switch case for different event types
     switch (type) {
       case "user.created": {
         const userData = {
           _id: data.id,
-          email: data.email_addresses?.[0]?.email_address,
-          name: `${data.first_name ?? ""} ${data.last_name ?? ""}`.trim(),
+          email: data.email_addresses[0].email_address,
+          name: data.first_name + " " + data.last_name,
           image: data.profile_image_url,
           resume: "",
         };
         await User.create(userData);
+        res.json({});
         break;
       }
-
       case "user.updated": {
         const userData = {
-          email: data.email_addresses?.[0]?.email_address,
-          name: `${data.first_name ?? ""} ${data.last_name ?? ""}`.trim(),
+          _id: data.id,
+          email: data.email_addresses[0].email_address,
+          name: data.first_name + " " + data.last_name,
           image: data.profile_image_url,
         };
         await User.findByIdAndUpdate(data.id, userData);
+        res.json({});
         break;
       }
-
       case "user.deleted": {
         await User.findByIdAndDelete(data.id);
+        res.json({});
         break;
       }
-
       default:
         break;
     }
-  } catch (dbError) {
-    // DB errors should not fail the webhook
-    console.error("⚠️ Clerk webhook DB error:", dbError);
+  } catch (error) {
+    console.log(error.message);
+    res.json({ success: false, message: "Webhook handling failed" });
   }
 };
