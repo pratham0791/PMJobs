@@ -9,7 +9,7 @@ const JobCard = ({ job }) => {
     <div className="group border border-gray-200 hover:border-blue-400 p-6 shadow-md hover:shadow-2xl rounded-xl transition-all duration-300 hover:-translate-y-2 bg-white">
       <div className="flex justify-between items-center">
         <div className="bg-gradient-to-br from-blue-50 to-indigo-100 p-2.5 rounded-lg">
-          <img className="h-9" src={assets.company_icon} alt="" />
+          <img className="h-9" src={job.companyId.image} alt="" />
         </div>
       </div>
       <h4 className="font-bold text-xl mt-3 text-gray-800 group-hover:text-blue-600 transition-colors">{job.title}</h4>
